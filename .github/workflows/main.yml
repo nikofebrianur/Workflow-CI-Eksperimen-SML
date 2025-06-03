@@ -40,13 +40,19 @@ jobs:
           mlflow run . --env-manager=local
 
       - name: Get latest MLflow run_id
+        working-directory: MLProject
         run: |
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest run_id: $RUN_ID"
+          echo "✅ Successfully set RUN_ID: $RUN_ID"
 
       - name: Build Docker Model
         run: |
+          if [ -z "${{ env.RUN_ID }}" ]; then
+            echo "❌ RUN_ID is empty. Cannot build docker image."
+            exit 1
+          fi
+          cd MLProject
           mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "zara_model"
 
       - name: Log in to Docker Hub
